@@ -1,110 +1,249 @@
-# Valdi
+# Omni-BASE
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE.md)
-[![Platforms](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20macOS-lightgrey)](./docs/INSTALL.md)
-[![Status](https://img.shields.io/badge/status-beta-yellow)]()
-[![Discord](https://img.shields.io/discord/1285677307163574322?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/uJyNEeYX2U)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Documentation](https://img.shields.io/badge/docs-available-brightgreen)](./docs/README.md)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![Platforms](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)]()
+[![Status](https://img.shields.io/badge/status-alpha-orange)]()
+[![Swift](https://img.shields.io/badge/Swift-5.0-orange?logo=swift)](https://swift.org)
+[![Rust](https://img.shields.io/badge/Rust-1.70+-orange?logo=rust)](https://www.rust-lang.org/)
 
-> [!NOTE]
-> **Beta Status:** Valdi has been widely used in Snap's production apps for the last 8 years. We're calling this a beta because our tools and documentation need more battle testing in the open source world. Valdi will exit beta when we're happy with the developer experience.
+**Omni-BASE is a cross-platform TAK (Team Awareness Kit) client built with Rust and native mobile frameworks.** It provides full ATAK-compatible tactical map functionality with multi-server management, real-time CoT (Cursor on Target) messaging, and a modern native UI.
 
-**Valdi is a cross-platform UI framework that delivers native performance without sacrificing developer velocity.** Write your UI once in declarative TypeScript, and it compiles directly to native views on iOS, Android, and macOS—no web views, no JavaScript bridges. 
+## Features
 
-## Quick Example
+### 🗺️ Tactical Map Interface
+- **ATAK-style UI** - Professional tactical map interface mirroring ATAK's design
+- **MapKit Integration** - Native iOS mapping with satellite, hybrid, and standard views
+- **Real-time CoT Markers** - Live position updates with color-coded unit types (friendly/hostile/unknown)
+- **GPS Tracking** - Real-time location with accuracy indicators
+- **Interactive Controls** - Zoom, pan, layer switching, and GPS centering
 
-A basic Valdi component:
+### 📡 Multi-Server Management
+- **Server Configuration** - Add, edit, and delete multiple TAK servers
+- **Persistent Storage** - Server configurations saved locally with UserDefaults
+- **One-Tap Switching** - Quickly switch between configured servers
+- **Connection Status** - Real-time indicators showing active connections
+- **Protocol Support** - TCP/UDP with optional TLS encryption
+- **Active Server Display** - Current server name shown in status bar
 
-```tsx
-import { Component } from 'valdi_core/src/Component';
+### 💬 CoT Messaging
+- **XML Parser** - Parse and display CoT messages from TAK servers
+- **Broadcast Position** - Send self-position updates with full metadata
+- **Event Tracking** - Monitor sent and received message counts
+- **Type Filtering** - Filter units by affiliation (friendly, hostile, unknown)
 
-class HelloWorld extends Component {
-  onRender() {
-    const message = 'Hello World! 👻';
-    <view backgroundColor='#FFFC00' padding={30}>
-      <label color='black' value={message} />
-    </view>;
-  }
-}
+### 🎨 User Interface
+- **Responsive Design** - Works in portrait and landscape orientations
+- **Status Bar** - Real-time connection status, message counts, GPS accuracy, time
+- **Bottom Toolbar** - Quick access to GPS, broadcast, zoom, layers, measure, and route tools
+- **Layers Panel** - Toggle map types and unit overlays with visual feedback
+- **Haptic Feedback** - Tactile response for all button interactions
+- **Dark Mode Ready** - Semi-transparent overlays optimized for tactical use
+
+## Architecture
+
+### Core Components
+
+```
+omni-BASE/
+├── apps/
+│   └── omnitak_ios_test/        # Native iOS app
+│       ├── OmniTAKTest/
+│       │   ├── OmniTAKTestApp.swift      # App entry point
+│       │   ├── MapViewController.swift   # Main ATAK interface (800+ lines)
+│       │   ├── TAKService.swift          # TAK server integration
+│       │   ├── ServerManager.swift       # Multi-server management
+│       │   └── Info.plist                # Location permissions
+│       └── OmniTAKMobile.xcframework     # Rust FFI bindings
+└── modules/
+    └── omnitak_mobile/           # Rust core library
 ```
 
-<p align="center">
-  <img src="./docs/docs/assets/start-about/IMG_1445.jpg" width="400" alt="Hello World example running on iOS" />
-</p>
+### Technology Stack
 
-## Quick Links
+- **Frontend**: SwiftUI + UIKit (iOS)
+- **Core Library**: Rust (cross-platform)
+- **FFI**: C bindings via XCFramework
+- **Mapping**: MapKit (iOS native)
+- **Location**: CoreLocation
+- **Storage**: UserDefaults (local persistence)
+- **Protocol**: TCP/UDP with TAK CoT XML
 
-- [Getting Started Guide](./docs/INSTALL.md)
-- [Documentation](./docs/README.md)
-- [Codelabs](./docs/docs/start-code-lab.md)
-- [API Reference](./docs/api/api-quick-reference.md)
-- [Component Library (Coming Soon!)](https://github.com/Snapchat/Valdi_Widgets)
+## Quick Start
 
-## Why Choose Valdi?
+### Prerequisites
 
-Valdi is a cross-platform UI framework designed to solve the fundamental problem of cross-platform development: velocity vs. runtime performance. For 8 years, it has powered a large portion of Snap's production apps.
+- Xcode 15.0+
+- iOS 15.0+ deployment target
+- Rust toolchain (for building core library)
+- macOS with Apple Silicon or Intel
 
-### True Native Performance
+### Installation
 
-Unlike frameworks that rely on web views or JavaScript bridges, Valdi compiles declaratively rendered TypeScript components into platform-native views. Valdi also includes several other performance advantages:
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/engindearing-projects/omni-BASE.git
+   cd omni-BASE
+   ```
 
-- **[Automatic view recycling](./docs/docs/performance-view-recycling.md)** - Global view pooling system reuses native views across all screens, dramatically reducing inflation latency
-- **Optimized component rendering** - Components re-render independently without triggering parent re-renders, enabling fast incremental updates
-- **Optimized layout engine** - C++ layout engine runs on the main thread with minimal marshalling overhead
-- **Viewport-aware rendering** - Only visible views are inflated, making infinite scrolling performant by default
+2. **Build the Rust core library:**
+   ```bash
+   cd modules/omnitak_mobile
+   ./build_ios.sh
+   ```
 
-Learn more in our [Performance Optimization Guide](./docs/docs/performance-optimization.md).
+3. **Open the iOS project:**
+   ```bash
+   cd ../../apps/omnitak_ios_test
+   open OmniTAKTest.xcodeproj
+   ```
 
-### Developer Experience Built for Speed
+4. **Configure signing:**
+   - Select the OmniTAKTest target
+   - Go to "Signing & Capabilities"
+   - Select your Team
 
-Valdi eliminates the traditional compile-test-debug cycle that slows native development:
+5. **Build and run:**
+   - Select iPhone simulator or device
+   - Press Cmd+R to build and run
 
-- **Instant hot reload** - See changes in milliseconds on iOS, Android, or desktop without recompiling
-- **[Full VSCode debugging](./docs/docs/workflow-hermes-debugger.md)** - Set breakpoints, inspect variables, profile performance, and capture heap dumps directly in VSCode
-- **Familiar syntax** - TSX components with TypeScript for type safety
+### Using the App
 
-### Flexible Adoption Model
+1. **Launch** - App auto-connects to default FreeTAK Server
+2. **View Map** - Satellite imagery with tactical overlays
+3. **Manage Servers** - Tap status bar to access server list
+4. **Add Server** - Tap "+" to configure new TAK server
+5. **Switch Servers** - Tap bolt icon to connect to different server
+6. **Broadcast Position** - Tap "Broadcast" to send CoT update
+7. **Toggle Layers** - Tap "Layers" to change map type and unit filters
 
-Valdi integrates easily into existing apps - start small and scale as needed:
+## Configuration
 
-- **[Embed Valdi in native](./docs/docs/native-bindings.md)** - Drop Valdi components into existing UIKit or Android view hierarchies
-- **[Embed native in Valdi](./docs/docs/native-customviews.md)** - Use platform-specific views within Valdi layouts via `<custom-view>`
-- **[Polyglot modules](./docs/docs/native-polyglot.md)** - Write performance-critical code in C++, Swift, Kotlin, or Objective-C with type-safe bindings to TypeScript
-- **[Full-stack architecture](./docs/docs/advanced-full-stack.md)** - Build entire features in Valdi with worker threads for background processing, eliminating platform-specific bridge code
+### Default TAK Server
 
-### Deep Native Integration
+The app ships with a default FreeTAK Server configuration:
 
-Valdi generates type-safe bindings between TypeScript and native platforms:
+```swift
+TAKServer(
+    name: "FreeTAK Server",
+    host: "204.48.30.216",
+    port: 8087,
+    protocolType: "tcp",
+    useTLS: false
+)
+```
 
-- **[Automatic code generation](./docs/docs/native-annotations.md)** - TypeScript interfaces compile to Kotlin, Objective-C, and Swift bindings
-- **[Native API access](./docs/docs/native-polyglot.md)** - Direct access to platform APIs and third-party native libraries through polyglot modules
-- **Bidirectional communication** - Pass complex data structures and callbacks between TypeScript and native code safely
-- **[Native protobuf support](./docs/docs/advanced-protobuf.md)** - Seamless integration with protobuf for efficient data serialization
+### Adding Custom Servers
 
-### Proven at Scale
+1. Open server list (tap status bar)
+2. Tap "Add Server" (+)
+3. Enter server details:
+   - Name (e.g., "My TAK Server")
+   - Host (IP address or hostname)
+   - Port (default: 8087)
+   - Protocol (TCP or UDP)
+   - TLS (toggle if using SSL/TLS)
+4. Tap "Save Server"
 
-- Powers critical features in production Snap apps.
-- Supports [advanced animations](./docs/docs/advanced-animations.md), real-time rendering, and [complex gesture systems](./docs/docs/core-touches.md)
+## Screenshots
 
-### Feature Highlights
+### Main Tactical Map
+<img src="./docs/assets/tactical-map.png" width="300" alt="ATAK-style tactical map with satellite imagery">
 
-- **[Flexbox layout system](./docs/docs/core-flexbox.md)** with automatic RTL support
-- **[Worker threads](./docs/docs/advanced-worker-service.md)** for multi-threaded JavaScript execution
-- **[Native animations](./docs/docs/advanced-animations.md)** for native look and feel
-- **[Advanced gesture recognition](./docs/docs/core-touches.md)** with platform-native handling
-- **[Built-in testing framework](./docs/docs/workflow-testing.md)** with component-level unit tests
-- **[Bazel integration](./docs/docs/workflow-bazel.md)** for reproducible, incremental builds
+### Server Management
+<img src="./docs/assets/server-list.png" width="300" alt="Multi-server configuration screen">
 
-## Need Help?
+### Layers Panel
+<img src="./docs/assets/layers-panel.png" width="300" alt="Map layers and unit filters">
 
-Join our [Discord](https://discord.gg/uJyNEeYX2U) for support.
+## Development
+
+### Project Structure
+
+- **MapViewController.swift** (800+ lines)
+  - ATAKMapView: Main map with UIViewRepresentable wrapper
+  - ATAKStatusBar: Connection status and metrics
+  - ATAKBottomToolbar: Quick action buttons
+  - ATAKSidePanel: Layers and overlays
+  - ServerConfigView: Multi-server management
+  - ServerEditView: Add/edit server dialog
+
+- **TAKService.swift**
+  - Rust FFI integration
+  - CoT XML parsing
+  - Server connection management
+  - Event callbacks
+
+- **ServerManager.swift**
+  - Server CRUD operations
+  - Persistent storage
+  - Active server tracking
+
+### Building from Source
+
+```bash
+# Build Rust library for iOS
+cd modules/omnitak_mobile
+./build_ios.sh
+
+# Build iOS app with Xcode CLI
+cd ../../apps/omnitak_ios_test
+xcodebuild -project OmniTAKTest.xcodeproj \
+           -scheme OmniTAKTest \
+           -configuration Debug \
+           -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+           build
+```
+
+### Running Tests
+
+```bash
+# Install on simulator
+xcrun simctl install "iPhone 16 Pro" \
+  "$(find ~/Library/Developer/Xcode/DerivedData/OmniTAKTest-*/Build/Products/Debug-iphonesimulator/OmniTAKTest.app | head -1)"
+
+# Launch app
+xcrun simctl launch "iPhone 16 Pro" com.engindearing.omnitak.test
+```
+
+## Roadmap
+
+- [ ] Android implementation
+- [ ] Advanced CoT filtering and search
+- [ ] Offline map caching
+- [ ] Drawing tools (routes, markers, shapes)
+- [ ] Team chat integration
+- [ ] File sharing and attachments
+- [ ] Mission planning tools
+- [ ] Integration with external sensors
+- [ ] Data replay and simulation
 
 ## Contributing
 
-Please follow the [contributing](./CONTRIBUTING.md) guidelines.
+We welcome contributions! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-Valdi is made available under the MIT [License](./LICENSE.md).
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Acknowledgments
+
+- Built with Rust for cross-platform core functionality
+- Uses MapKit for native iOS mapping
+- Compatible with TAK CoT XML protocol
+- Inspired by ATAK's tactical UI/UX design
+
+## Support
+
+For questions, issues, or feature requests:
+- Open an issue on GitHub
+- Contact: [Engineering Projects](https://github.com/engindearing-projects)
+
+---
+
+**Note**: This is an alpha release. Features are under active development and APIs may change.
