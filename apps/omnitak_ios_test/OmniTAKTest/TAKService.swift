@@ -1,5 +1,28 @@
 import Foundation
 import Combine
+import CoreLocation
+
+// CoT Event Model
+struct CoTEvent {
+    let uid: String
+    let type: String
+    let time: Date
+    let point: CoTPoint
+    let detail: CoTDetail
+}
+
+struct CoTPoint {
+    let lat: Double
+    let lon: Double
+    let hae: Double
+    let ce: Double
+    let le: Double
+}
+
+struct CoTDetail {
+    let callsign: String
+    let team: String?
+}
 
 class TAKService: ObservableObject {
     @Published var connectionStatus = "Disconnected"
@@ -8,71 +31,80 @@ class TAKService: ObservableObject {
     @Published var messagesReceived: Int = 0
     @Published var messagesSent: Int = 0
     @Published var lastMessage = ""
+    @Published var cotEvents: [CoTEvent] = []
 
-    private var connectionHandle: Int32 = -1
-    private var receiveTimer: Timer?
+    private var connectionHandle: UInt64 = 0
+    var onCoTReceived: ((CoTEvent) -> Void)?
 
     init() {
-        // Initialize the omnitak-mobile library
-        omnitak_mobile_init()
+        // Initialize the omnitak library
+        let result = omnitak_init()
+        if result != 0 {
+            print("❌ Failed to initialize omnitak library")
+        }
     }
 
     deinit {
         disconnect()
-        omnitak_mobile_cleanup()
+        omnitak_shutdown()
     }
 
-    func connect(host: String, port: UInt16, protocol: String, useTLS: Bool) {
-        // Create server config
-        let config = ServerConfig(
-            host: host,
-            port: port,
-            protocol: protocol,
-            use_tls: useTLS,
-            certificate_id: nil,
-            reconnect: false,
-            reconnect_delay_ms: 5000
-        )
+    func connect(host: String, port: UInt16, protocolType: String, useTLS: Bool) {
+        // Convert protocol string to enum
+        var protocolCode: Int32
+        switch protocolType.lowercased() {
+        case "tcp":
+            protocolCode = 0 // OMNITAK_PROTOCOL_TCP
+        case "udp":
+            protocolCode = 1 // OMNITAK_PROTOCOL_UDP
+        case "tls":
+            protocolCode = 2 // OMNITAK_PROTOCOL_TLS
+        case "websocket", "ws":
+            protocolCode = 3 // OMNITAK_PROTOCOL_WEBSOCKET
+        default:
+            protocolCode = 0 // Default to TCP
+        }
 
         // Convert to C strings
         let hostCStr = host.cString(using: .utf8)!
-        let protocolCStr = protocol.cString(using: .utf8)!
 
         // Call FFI connect function
-        let result = omnitak_mobile_connect(
+        let result = omnitak_connect(
             hostCStr,
             port,
-            protocolCStr,
-            useTLS,
-            nil,
-            false,
-            5000
+            protocolCode,
+            useTLS ? 1 : 0,
+            nil,  // cert_pem
+            nil,  // key_pem
+            nil   // ca_pem
         )
 
-        if result >= 0 {
+        if result > 0 {
             connectionHandle = result
             isConnected = true
             connectionStatus = "Connected"
             lastError = ""
 
-            // Start polling for messages
-            startReceiving()
+            // Register callback for receiving messages
+            registerCallback()
 
-            print("✅ Connected to TAK server: \(host):\(port)")
+            print("✅ Connected to TAK server: \(host):\(port) (connection ID: \(result))")
         } else {
             connectionStatus = "Connection Failed"
             lastError = "Failed to connect to \(host):\(port)"
-            print("❌ Connection failed: \(result)")
+            print("❌ Connection failed")
         }
     }
 
     func disconnect() {
-        guard connectionHandle >= 0 else { return }
+        guard connectionHandle > 0 else { return }
 
-        stopReceiving()
+        // Unregister callback
+        omnitak_unregister_callback(connectionHandle)
 
-        omnitak_mobile_disconnect(connectionHandle)
-        connectionHandle = -1
+        // Disconnect
+        omnitak_disconnect(connectionHandle)
+        connectionHandle = 0
         isConnected = false
         connectionStatus = "Disconnected"
 
@@ -80,69 +112,121 @@ class TAKService: ObservableObject {
     }
 
     func sendCoT(xml: String) -> Bool {
-        guard connectionHandle >= 0 else {
+        guard connectionHandle > 0 else {
             print("❌ Not connected")
             return false
         }
 
         let xmlCStr = xml.cString(using: .utf8)!
-        let result = omnitak_mobile_send_cot(connectionHandle, xmlCStr)
+        let result = omnitak_send_cot(connectionHandle, xmlCStr)
 
-        if result {
+        if result == 0 {  // OMNITAK_SUCCESS
             messagesSent += 1
             print("📤 Sent CoT message")
             return true
         } else {
-            print("❌ Failed to send CoT message")
+            print("❌ Failed to send CoT message (error: \(result))")
             return false
         }
     }
 
-    private func startReceiving() {
-        // Poll for incoming messages every 100ms
-        receiveTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            self?.checkForMessages()
-        }
+    private func registerCallback() {
+        // Create context pointer
+        let context = Unmanaged.passUnretained(self).toOpaque()
+
+        // Register callback
+        omnitak_register_callback(connectionHandle, cotCallback, context)
+    }
+}
+
+// Global callback function (must be at file scope, not inside class)
+private func cotCallback(
+    userData: UnsafeMutableRawPointer?,
+    connectionId: UInt64,
+    cotXml: UnsafePointer<CChar>?
+) {
+    guard let userData = userData,
+          let cotXml = cotXml else {
+        return
     }
 
-    private func stopReceiving() {
-        receiveTimer?.invalidate()
-        receiveTimer = nil
-    }
+    // Convert C string to Swift string
+    let message = String(cString: cotXml)
 
-    private func checkForMessages() {
-        guard connectionHandle >= 0 else { return }
+    // Get the TAKService instance
+    let service = Unmanaged<TAKService>.fromOpaque(userData).takeUnretainedValue()
 
-        // Allocate buffer for incoming message
-        let bufferSize = 64 * 1024 // 64KB buffer
-        var buffer = [Int8](repeating: 0, count: bufferSize)
-
-        let bytesRead = omnitak_mobile_receive_cot(
-            connectionHandle,
-            &buffer,
-            Int32(bufferSize)
-        )
-
-        if bytesRead > 0 {
-            // Convert to Swift String
-            if let message = String(bytes: buffer.prefix(Int(bytesRead)), encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self.messagesReceived += 1
-                    self.lastMessage = message
-                    print("📥 Received CoT: \(message.prefix(100))...")
-                }
-            }
+    // Parse CoT message
+    if let event = parseCoT(xml: message) {
+        DispatchQueue.main.async {
+            service.messagesReceived += 1
+            service.lastMessage = message
+            service.cotEvents.append(event)
+            service.onCoTReceived?(event)
+            print("📥 Received CoT: \(event.detail.callsign) at (\(event.point.lat), \(event.point.lon))")
         }
     }
 }
 
-// Server configuration struct
-struct ServerConfig {
-    let host: String
-    let port: UInt16
-    let protocol: String
-    let use_tls: Bool
-    let certificate_id: String?
-    let reconnect: Bool
-    let reconnect_delay_ms: Int
+// Simple CoT XML Parser
+private func parseCoT(xml: String) -> CoTEvent? {
+    // Extract UID
+    guard let uidRange = xml.range(of: "uid=\"([^\"]+)\"", options: .regularExpression),
+          let uid = xml[uidRange].split(separator: "\"").dropFirst().first else {
+        return nil
+    }
+
+    // Extract type
+    guard let typeRange = xml.range(of: "type=\"([^\"]+)\"", options: .regularExpression),
+          let type = xml[typeRange].split(separator: "\"").dropFirst().first else {
+        return nil
+    }
+
+    // Extract point data
+    guard let pointRange = xml.range(of: "<point[^>]+>", options: .regularExpression) else {
+        return nil
+    }
+
+    let pointTag = String(xml[pointRange])
+
+    guard let latStr = extractAttribute("lat", from: pointTag),
+          let lonStr = extractAttribute("lon", from: pointTag),
+          let lat = Double(latStr),
+          let lon = Double(lonStr) else {
+        return nil
+    }
+
+    let hae = Double(extractAttribute("hae", from: pointTag) ?? "0") ?? 0
+    let ce = Double(extractAttribute("ce", from: pointTag) ?? "10") ?? 10
+    let le = Double(extractAttribute("le", from: pointTag) ?? "10") ?? 10
+
+    // Extract callsign
+    var callsign = String(uid)
+    if let callsignRange = xml.range(of: "callsign=\"([^\"]+)\"", options: .regularExpression),
+       let extractedCallsign = xml[callsignRange].split(separator: "\"").dropFirst().first {
+        callsign = String(extractedCallsign)
+    }
+
+    // Extract team
+    var team: String? = nil
+    if let teamRange = xml.range(of: "name=\"([^\"]+)\"", options: .regularExpression),
+       let extractedTeam = xml[teamRange].split(separator: "\"").dropFirst().first {
+        team = String(extractedTeam)
+    }
+
+    return CoTEvent(
+        uid: String(uid),
+        type: String(type),
+        time: Date(),
+        point: CoTPoint(lat: lat, lon: lon, hae: hae, ce: ce, le: le),
+        detail: CoTDetail(callsign: callsign, team: team)
+    )
+}
+
+private func extractAttribute(_ name: String, from xml: String) -> String? {
+    guard let range = xml.range(of: "\(name)=\"([^\"]+)\"", options: .regularExpression) else {
+        return nil
+    }
+    let parts = xml[range].split(separator: "\"")
+    return parts.count > 1 ? String(parts[1]) : nil
 }

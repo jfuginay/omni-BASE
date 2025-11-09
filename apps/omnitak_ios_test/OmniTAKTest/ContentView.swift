@@ -96,7 +96,7 @@ struct ContentView: View {
             takService.connect(
                 host: serverHost,
                 port: port,
-                protocol: "tcp",
+                protocolType: "tcp",
                 useTLS: useTLS
             )
         }

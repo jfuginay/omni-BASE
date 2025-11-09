@@ -33,10 +33,12 @@
     <dict/>
     <key>UISupportedInterfaceOrientations</key>
     <array>
-        <string>UIInterfaceOrientationPortrait</string>
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
+        <string>UIInterfaceOrientationPortrait</string>
     </array>
+    <key>UIRequiresFullScreen</key>
+    <true/>
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
@@ -44,5 +46,9 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>OmniTAK needs your location to display your position on the tactical map and share it with your team.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>OmniTAK needs continuous location access to maintain situational awareness and track your position for team coordination.</string>
 </dict>
 </plist>
