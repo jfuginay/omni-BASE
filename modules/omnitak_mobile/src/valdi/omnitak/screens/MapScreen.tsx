@@ -25,6 +25,10 @@ export interface MapScreenViewModel {
 
 /**
  * @Context
+ * @ExportModel({
+ *   ios: 'MapScreenPlaceholderContext',
+ *   android: 'com.engindearing.omnitak.MapScreenPlaceholderContext'
+ * })
  */
 export interface MapScreenContext {
   initialCenter?: { lat: number; lon: number };
