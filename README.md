@@ -147,13 +147,27 @@ TAKServer(
 ## Screenshots
 
 ### Main Tactical Map
-<img src="./docs/assets/tactical-map.png" width="300" alt="ATAK-style tactical map with satellite imagery">
+<p align="center">
+  <img src="./docs/assets/tactical-map-satellite.png" width="700" alt="ATAK-style tactical map with satellite imagery">
+</p>
+
+*Satellite view with GPS tracking, CoT markers, and tactical overlays*
+
+### Map Layers & Views
+
+<p align="center">
+  <img src="./docs/assets/layers-panel-hybrid.png" width="300" alt="Layers panel with Hybrid view selected">
+  <img src="./docs/assets/map-standard-view.png" width="300" alt="Standard street map view">
+</p>
+
+*Left: Layers panel with map type and unit filters | Right: Standard map view*
 
 ### Server Management
-<img src="./docs/assets/server-list.png" width="300" alt="Multi-server configuration screen">
+<p align="center">
+  <img src="./docs/assets/server-list.png" width="700" alt="Multi-server configuration screen">
+</p>
 
-### Layers Panel
-<img src="./docs/assets/layers-panel.png" width="300" alt="Map layers and unit filters">
+*TAK Servers management with connection status and server switching*
 
 ## Development
 
