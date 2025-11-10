@@ -1,0 +1,22 @@
+# Local Development Configuration
+# Copy this file to .bazelrc.local and customize for your machine
+# .bazelrc.local is gitignored and won't be committed
+
+# Option 1: Use automatic "Apple Development" certificate (simplest)
+# Just uncomment if you have issues:
+# build:ios_device --ios_signing_cert_name="Apple Development"
+
+# Option 2: Specify your exact signing identity
+# Find it with: security find-identity -v -p codesigning
+# build:ios_device --ios_signing_cert_name="Apple Development: Your Name (TEAM123456)"
+
+# Option 3: Specify your Team ID (recommended for automatic provisioning)
+# Find it at: https://developer.apple.com/account (Membership section)
+build:ios_device --ios_development_team=TEAM123456
+
+# Option 4: Use a specific provisioning profile
+# build:ios_device --ios_provisioning_profile=/path/to/profile.mobileprovision
+
+# For distribution builds (if you have a distribution certificate)
+# build:release --ios_signing_cert_name="Apple Distribution"
+# build:release --ios_development_team=TEAM123456

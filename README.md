@@ -63,6 +63,18 @@ See [screenshots below](#screenshots) for live device captures!
 - **Haptic Feedback** - Tactile response for all button interactions
 - **Dark Mode Ready** - Semi-transparent overlays optimized for tactical use
 
+### 🔌 Plugin System (NEW!)
+- **Secure Plugin Architecture** - Extensible plugin system with permission-based API access
+- **Two Development Modes** - Local development (your own signing) or official distribution (OmniTAK signing)
+- **GitLab CI/CD Integration** - Automated build, test, sign, and publish pipeline
+- **Rich Plugin APIs** - Access to CoT messaging, map layers, networking, location, and UI
+- **Code Signing** - All official plugins signed with OmniTAK's Apple Developer certificate
+- **Plugin Registry** - GitLab Package Registry for distribution
+- **Sandboxed Execution** - Plugins run in isolated contexts with defined API boundaries
+- **Developer Tools** - Complete template, scripts, and documentation for plugin development
+
+See [Plugin Development](#plugin-development) section below for details.
+
 ## Architecture
 
 ### Core Components
@@ -82,13 +94,30 @@ omni-BASE/
 │       ├── BUILD.bazel                   # Bazel build configuration
 │       ├── src/valdi/omnitak_app/        # TypeScript entry point
 │       └── app_assets/android/           # Android resources
-└── modules/
-    └── omnitak_mobile/           # Cross-platform module
-        ├── src/                          # TypeScript/TSX application
-        ├── ios/                          # iOS native layer
-        └── android/                      # Android native layer
-            ├── native/                   # Kotlin + JNI + Rust
-            └── maplibre/                 # MapLibre integration
+├── modules/
+│   ├── omnitak_mobile/           # Cross-platform module
+│   │   ├── src/                          # TypeScript/TSX application
+│   │   ├── ios/                          # iOS native layer
+│   │   └── android/                      # Android native layer
+│   │       ├── native/                   # Kotlin + JNI + Rust
+│   │       └── maplibre/                 # MapLibre integration
+│   └── omnitak_plugin_system/    # Plugin system (NEW!)
+│       └── ios/                          # iOS plugin infrastructure
+│           ├── Sources/                  # Swift plugin APIs
+│           └── BUILD.bazel               # Bazel build config
+├── plugin-template/              # Plugin development template
+│   ├── plugin.json                       # Plugin manifest
+│   ├── ios/Sources/                      # Plugin implementation
+│   ├── scripts/                          # Build and CI/CD scripts
+│   └── .gitlab-ci.yml                    # Automated pipeline
+├── docs/                         # Documentation
+│   ├── PLUGIN_ARCHITECTURE.md            # Plugin system design
+│   ├── PLUGIN_DEVELOPMENT_GUIDE.md       # Developer guide
+│   ├── LOCAL_DEVELOPMENT_SETUP.md        # Local setup guide
+│   └── PLUGIN_CI_CD_SETUP.md             # CI/CD configuration
+└── scripts/                      # Build scripts
+    ├── build_ios.sh                      # iOS build script
+    └── run_ios_simulator.sh              # Simulator deployment
 ```
 
 ### Technology Stack
@@ -203,6 +232,81 @@ The Taky server will start on `127.0.0.1:8087` (default TCP port). The app is pr
    ```
 
 For detailed Android build instructions, see [apps/omnitak_android/README.md](apps/omnitak_android/README.md).
+
+## Plugin Development
+
+**NEW!** OmniTAK now supports a secure plugin system for extending functionality.
+
+### Two Development Modes
+
+#### 🏠 Local Development (Your Own Signing)
+- Use your own Apple Developer account (free or paid)
+- Build and test on your own iPhone/iPad
+- Perfect for learning and experimentation
+- No approval needed
+
+#### 🏢 Official Distribution (OmniTAK Signing)
+- Submit plugins for official distribution
+- Signed with OmniTAK's certificate via GitLab CI/CD
+- Published to official plugin registry
+- Available to all OmniTAK users
+- Requires code review
+
+### Getting Started with Plugins
+
+```bash
+# Navigate to plugin template
+cd plugin-template
+
+# Configure local signing (first time)
+cp .bazelrc.local.example .bazelrc.local
+# Edit .bazelrc.local with your Apple Developer Team ID
+
+# Build for simulator (no signing needed)
+./scripts/build_plugin_ios.sh simulator debug
+
+# Build for your iPhone
+./scripts/build_plugin_ios.sh device debug
+```
+
+### Plugin Documentation
+
+Complete guides available in the `docs/` directory:
+
+- **[Plugin Architecture](docs/PLUGIN_ARCHITECTURE.md)** - System design, security model, API reference
+- **[Plugin Development Guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md)** - Complete developer guide with examples
+- **[Local Development Setup](docs/LOCAL_DEVELOPMENT_SETUP.md)** - Set up your Mac for plugin development
+- **[CI/CD Setup](docs/PLUGIN_CI_CD_SETUP.md)** - GitLab CI/CD configuration for automated signing
+
+### Plugin Features
+
+- **CoT Message Handling** - Process and filter Cursor-on-Target messages
+- **Map Layers** - Add custom map overlays and markers
+- **UI Components** - Create panels, toolbars, and dialogs
+- **Network Access** - Make HTTP/HTTPS requests
+- **Location Services** - Access device GPS
+- **Persistent Storage** - Save plugin data
+- **Permission System** - Fine-grained access control
+
+### Quick Plugin Example
+
+```swift
+import OmniTAKPluginSystem
+
+@objc public class MyPlugin: NSObject, OmniTAKPlugin {
+    func initialize(context: PluginContext) throws {
+        context.logger.info("Plugin initialized")
+    }
+
+    func activate() throws {
+        // Register CoT handler
+        let cotManager = try context.cotManager
+        try cotManager?.registerHandler(self)
+    }
+}
+```
+
+See the [plugin-template](plugin-template/) directory for a complete working example.
 
 ### Using the App
 
@@ -339,8 +443,13 @@ xcrun simctl launch "iPhone 16 Pro" com.engindearing.omnitak.test
 - [x] Real-time TAK server connectivity
 - [x] ATAK-style navigation drawer
 - [x] User profile system
+- [x] Secure plugin system with GitLab CI/CD
+- [x] Plugin development template and tools
+- [x] Comprehensive plugin documentation
 
 ### In Progress 🚧
+- [ ] Plugin registry and marketplace
+- [ ] Example plugins (weather, tools, overlays)
 - [ ] Android implementation
 - [ ] Advanced CoT filtering and search
 - [ ] Offline map caching

@@ -2,13 +2,27 @@
 
 This is the official template for creating OmniTAK plugins. Use this template to build secure, signed plugins that extend the functionality of the OmniTAK mobile application.
 
-## Quick Start
+## Two Ways to Develop
 
-### 1. Clone this template
+### 🏠 Local Development (Your Own Signing)
+- Use your own Apple Developer account (free or paid)
+- Build and test on your own iPhone/iPad
+- Perfect for learning and experimentation
+- See [Local Development Setup](../docs/LOCAL_DEVELOPMENT_SETUP.md)
+
+### 🏢 Official Distribution (OmniTAK Signing)
+- Submit your plugin for official distribution
+- Signed with OmniTAK's certificate via GitLab CI/CD
+- Published to official plugin registry
+- Available to all OmniTAK users
+
+## Quick Start - Local Development
+
+### 1. Clone this repository
 
 ```bash
-git clone https://gitlab.com/omnitak/plugin-template.git my-plugin
-cd my-plugin
+git clone https://gitlab.com/engindearing/omni-BASE.git
+cd omni-BASE/plugin-template
 ```
 
 ### 2. Customize your plugin
@@ -46,36 +60,78 @@ public class PluginMain: NSObject, OmniTAKPlugin {
 }
 ```
 
-### 4. Build and test locally
+### 4. Configure local signing (first time only)
 
 ```bash
-# Build plugin
-./scripts/build_plugin_ios.sh debug
+# Copy example configuration
+cp .bazelrc.local.example .bazelrc.local
+
+# Edit with your Team ID (find at developer.apple.com)
+# Change TEAM123456 to your actual Team ID
+nano .bazelrc.local
+```
+
+### 5. Build and test locally
+
+```bash
+# Build for simulator (no signing needed)
+./scripts/build_plugin_ios.sh simulator debug
+
+# Build for your iPhone (uses your Apple Developer certificate)
+./scripts/build_plugin_ios.sh device debug
 
 # Run tests
 ./scripts/test_plugin_ios.sh
 ```
 
-### 5. Push to GitLab
+### 6. Test on your device
 
-The CI/CD pipeline will automatically build, test, sign, and package your plugin:
+Integrate the plugin into the OmniTAK test app and install on your iPhone.
+
+## Quick Start - Official Distribution
+
+Want to publish your plugin to all OmniTAK users?
+
+### 1. Fork the repository
+
+Fork on GitLab to your account.
+
+### 2. Develop your plugin
+
+Follow the local development steps above.
+
+### 3. Create a merge request
 
 ```bash
 git add .
-git commit -m "Initial plugin implementation"
-git push origin main
+git commit -m "Add awesome plugin feature"
+git push origin your-branch
 ```
 
-### 6. Publish a release
+Create a merge request to the main repository.
 
-Create a git tag to publish your plugin:
+### 4. Code review
+
+The OmniTAK team will review your plugin for:
+- Security (no malicious code)
+- Quality (follows best practices)
+- Functionality (works as described)
+
+### 5. Automated signing and publishing
+
+Once approved and merged:
+- GitLab CI/CD automatically builds with the **official OmniTAK certificate**
+- Plugin is signed with `com.engindearing.omnitak.plugin.*` bundle ID
+- Published to the official plugin registry
+
+### 6. Create a release tag
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The plugin will be automatically published to the OmniTAK Plugin Registry!
+Your plugin is now available to all OmniTAK users! 🎉
 
 ## Plugin Structure
 
@@ -163,22 +219,32 @@ func activate() async throws {
 }
 ```
 
-## Local Development
+## Development Modes Comparison
 
-### Prerequisites
+| Aspect | Local Development | Official Distribution |
+|--------|------------------|----------------------|
+| **Signing** | Your Apple Developer cert | OmniTAK official cert |
+| **Bundle ID** | `com.yourname.*` | `com.engindearing.omnitak.plugin.*` |
+| **Devices** | Only your devices | All OmniTAK users |
+| **Distribution** | Manual sharing | Official plugin registry |
+| **Approval** | None needed | Code review required |
+| **Certificate** | Your account | OmniTAK account |
 
-- macOS with Xcode 15+
-- Bazel 7.0+
-- Swift 5.9+
+## Local Development Commands
+
+See [Local Development Setup Guide](../docs/LOCAL_DEVELOPMENT_SETUP.md) for detailed instructions.
 
 ### Build Commands
 
 ```bash
-# Debug build
-./scripts/build_plugin_ios.sh debug
+# Build for simulator (fastest, no signing)
+./scripts/build_plugin_ios.sh simulator debug
+
+# Build for your iPhone
+./scripts/build_plugin_ios.sh device debug
 
 # Release build
-./scripts/build_plugin_ios.sh release
+./scripts/build_plugin_ios.sh device release
 
 # Run tests
 ./scripts/test_plugin_ios.sh

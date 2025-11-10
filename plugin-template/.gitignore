@@ -1,0 +1,48 @@
+# Bazel build outputs
+bazel-*
+/bazel-bin
+/bazel-out
+/bazel-testlogs
+/bazel-plugin-template
+
+# Local development configuration (contains your signing identity)
+.bazelrc.local
+
+# Build artifacts
+dist/
+*.omniplugin
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.log
+*.tmp
+temp/
+
+# Signing materials (NEVER commit these!)
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest

@@ -12,8 +12,16 @@ build:ios --cpu=ios_arm64
 build:ios --ios_minimum_os=14.0
 
 # Code signing for plugins
+# Default: ad-hoc signing (for simulator and unsigned builds)
 build:ios --ios_signing_cert_name=-
+
+# Device signing: uses "Apple Development" by default
+# Override in .bazelrc.local with your specific signing identity
 build:ios_device --ios_signing_cert_name="Apple Development"
+
+# Import local developer configuration (gitignored)
+# Create .bazelrc.local to override signing settings for your machine
+try-import %workspace%/.bazelrc.local
 
 # Swift settings
 build:ios --swiftcopt=-enable-testing
