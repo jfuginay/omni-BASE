@@ -204,6 +204,29 @@ The Taky server will start on `127.0.0.1:8087` (default TCP port). The app is pr
 
 For detailed Android build instructions, see [apps/omnitak_android/README.md](apps/omnitak_android/README.md).
 
+## CI/CD - Automated Android Builds
+
+**GitLab CI/CD pipeline is configured for automatic Android app building.**
+
+The pipeline automatically:
+- ✅ Validates project structure
+- ✅ Builds Rust native libraries for all Android ABIs
+- ✅ Compiles Android APK with Bazel
+- ✅ Creates debug and release builds
+- ✅ Packages build artifacts
+
+**Triggers:**
+- Push to any branch → Debug APK
+- Push to main/master → Release APK
+- Tag creation → Release APK with extended retention
+
+**Getting APKs:**
+1. Navigate to **CI/CD → Pipelines** in GitLab
+2. Click on the successful pipeline
+3. Download artifacts from `build_android_apk` or `build_android_release` jobs
+
+**Configuration:** See [GITLAB_CI_ANDROID_SETUP.md](GITLAB_CI_ANDROID_SETUP.md) for detailed setup instructions, customization options, and troubleshooting.
+
 ### Using the App
 
 1. **Start Taky Server** - Run `taky -l debug` to start local TAK server on port 8087
